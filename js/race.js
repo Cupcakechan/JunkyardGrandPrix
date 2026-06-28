@@ -33,6 +33,7 @@ export const Race = {
   time: 0,                  // elapsed race time, seconds
   finished: false,          // true on the frame the final lap completes
 
+  _started: false,          // has the clock started? (start-on-throttle)
   _prevX: 0,                // car x last step, for the line-crossing test
   _armed: false,            // has the far-side checkpoint been passed this lap?
 
@@ -41,6 +42,7 @@ export const Race = {
     this.lap = 1;
     this.time = 0;
     this.finished = false;
+    this._started = false;  // clock waits for the first throttle press
     this._prevX = car.x;    // start ON the line: prevX === FINISH.X won't false-trigger
     this._armed = false;
   },
@@ -49,7 +51,12 @@ export const Race = {
   // car's new position. No-op once finished, which freezes the clock on the win screen.
   update(dt, car) {
     if (this.finished) return;
-    this.time += dt;
+
+    // Start-on-throttle: the clock holds at 0:00 until the player first hits the
+    // gas, then runs until the win lap freezes it. The car only gains forward
+    // speed from the throttle, so speed > 0 means "they've gone".
+    if (!this._started && car.speed > 0) this._started = true;
+    if (this._started) this.time += dt;
 
     // Arm the checkpoint whenever the car is on the far (top) straight band.
     if (car.y >= TOP_BAND.yMin && car.y <= TOP_BAND.yMax) this._armed = true;
