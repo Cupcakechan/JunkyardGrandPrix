@@ -16,14 +16,15 @@ export class Car {
     this.speed = 0;     // px/s along heading; + forward, - reverse
   }
 
-  reset(x, y) {
+  reset(x, y, heading = 0) {
     this.x = x;
     this.y = y;
-    this.heading = 0;
+    this.heading = heading;
     this.speed = 0;
   }
 
-  update(dt, input, bounds) {
+  // onTrack: is the car currently over the asphalt? (computed by main via Track)
+  update(dt, input, bounds, onTrack) {
     const C = CONFIG.CAR;
 
     // --- throttle / brake / coast (one key brakes then reverses) ---
@@ -42,6 +43,16 @@ export class Car {
     if (this.speed > C.MAX_SPEED) this.speed = C.MAX_SPEED;
     if (this.speed < -C.MAX_REVERSE_SPEED) this.speed = -C.MAX_REVERSE_SPEED;
 
+    // --- off-track: bog down to a crawl (forced-slow) ---
+    // Extra drag only kicks in ABOVE the crawl cap, so you plow down fast then
+    // keep crawling — slow enough that cutting across the dirt never pays, but
+    // you can still steer back onto the asphalt.
+    if (!onTrack) {
+      const cap = C.OFFTRACK_MAX_SPEED;
+      if (this.speed > cap)  this.speed = Math.max(cap,  this.speed - C.OFFTRACK_DECEL * dt);
+      if (this.speed < -cap) this.speed = Math.min(-cap, this.speed + C.OFFTRACK_DECEL * dt);
+    }
+
     // --- steering: only while moving, authority grows with speed ---
     const steer = (input.right ? 1 : 0) - (input.left ? 1 : 0);
     if (steer !== 0 && this.speed !== 0) {
@@ -55,8 +66,9 @@ export class Car {
     this.x += fx * this.speed * dt;
     this.y += fy * this.speed * dt;
 
-    // TEMPORARY: keep the car on screen during feel-testing. This is a crude
-    // edge clamp, NOT the real track collision — that arrives in Phase 2.
+    // Hard playfield boundary: keep the car inside the canvas. This is the only
+    // real wall — the track edges just bog you down (handled above), they don't
+    // stop you. Off the asphalt you crawl out here to the lot's edge and halt.
     const r = C.SIZE / 2;
     let hitWall = false;
     if (this.x < r)            { this.x = r;            hitWall = true; }

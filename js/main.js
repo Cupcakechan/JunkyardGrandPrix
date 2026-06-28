@@ -1,10 +1,11 @@
 // main.js
 // Entry point: sets up the canvas, the fixed-timestep loop, the tiny state
-// machine (MENU <-> PLAYING), wires input, and owns the car.
+// machine (MENU <-> PLAYING), wires input, and owns the car and the track.
 
 import { CONFIG } from './config.js';
 import { Input } from './input.js';
 import { Car } from './car.js';
+import { Track } from './track.js';
 import { UI } from './ui.js';
 
 const canvas = document.getElementById('game');
@@ -20,7 +21,8 @@ let state = 'MENU';                 // 'MENU' | 'PLAYING'
 const car = new Car();
 
 function startRace() {
-  car.reset(W / 2, H / 2);          // spawn centre, facing up
+  const S = CONFIG.TRACK.START;
+  car.reset(S.X, S.Y, S.HEADING);   // on the start/finish line, facing along the track
   state = 'PLAYING';
 }
 
@@ -37,7 +39,9 @@ function update(dt) {
   // PLAYING
   if (Input.consume('menu'))    { state = 'MENU'; return; }
   if (Input.consume('restart')) { startRace(); return; }
-  car.update(dt, Input, { w: W, h: H });
+
+  const onTrack = Track.isOnTrack(car.x, car.y);
+  car.update(dt, Input, { w: W, h: H }, onTrack);
 }
 
 function render() {
@@ -48,9 +52,9 @@ function render() {
     UI.drawMenu(ctx, W, H);
     return;
   }
-  UI.drawFloor(ctx, W, H);          // placeholder floor (Phase 1)
+  Track.draw(ctx, W, H);
   car.draw(ctx);
-  UI.drawHud(ctx, W, H, car);
+  UI.drawHud(ctx, W, H, car, Track.isOnTrack(car.x, car.y));
 }
 
 function frame(now) {

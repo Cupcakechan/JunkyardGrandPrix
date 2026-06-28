@@ -8,7 +8,7 @@ export const CONFIG = {
   CANVAS: {
     WIDTH: 800,            // internal render resolution (whole playfield fits onscreen)
     HEIGHT: 600,
-    BG: '#15130f',         // dirt-dark junkyard floor
+    BG: '#15130f',         // menu backdrop (gameplay backdrop is the dirt below)
   },
 
   CAR: {
@@ -31,6 +31,31 @@ export const CONFIG = {
     TURN_RATE: 3.0,           // max turn speed (rad/s) once at full authority
     STEER_FULL_SPEED: 140,    // speed at/above which steering is fully responsive;
                               //   below this, turning eases off down to zero at a standstill
+
+    // off-track (dirt): forced-slow, like the 1977 original
+    OFFTRACK_MAX_SPEED: 90,   // crawl speed once off the asphalt
+    OFFTRACK_DECEL: 700,      // how hard you bog down when you stray off (px/s^2)
+  },
+
+  TRACK: {
+    DIRT: '#2b211a',        // off-track ground (rough) — the forced-slow zone
+    ASPHALT: '#45434a',     // drivable surface
+    EDGE: '#6f6c75',        // lane edge stripe
+    EDGE_WIDTH: 3,
+
+    // The drivable band is OUTER minus an inner hole. The inner rounded-rect is
+    // DERIVED in track.js by insetting OUTER by WIDTH, so WIDTH is the single
+    // feel knob: wider = forgiving, narrower = harder. Both rects are centred
+    // in the 800x600 canvas. R is the corner radius (gives the oval its curves).
+    OUTER: { X: 60, Y: 60, W: 680, H: 480, R: 160 },
+    WIDTH: 120,             // asphalt band width in px
+
+    // where the car starts: on the bottom straight, on the line, facing along
+    // the track. Counterclockwise lap -> facing right. HEADING: 0 = up, +CW.
+    START: { X: 400, Y: 480, HEADING: Math.PI / 2 },
+
+    // start/finish line: checkered strip across the bottom straight at this x
+    FINISH: { X: 400, WIDTH: 30, SQUARE: 15, LIGHT: '#e8e2d2', DARK: '#1c1a16' },
   },
 
   HUD: {
@@ -43,6 +68,6 @@ export const CONFIG = {
   // Ship-blocking flags live here so they're easy to find and reset before release.
   // (See html-game reference: don't let a debug toggle ship by accident.)
   DEBUG: {
-    SHOW_SPEED: true,         // live speed readout in the HUD — turn OFF before shipping
+    SHOW_SPEED: true,         // live speed + on/off-track readout — turn OFF before shipping
   },
 };

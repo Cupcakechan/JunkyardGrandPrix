@@ -1,6 +1,7 @@
 // ui.js
-// All on-screen text/overlay drawing: the menu, the Phase-1 placeholder floor,
-// and the in-race HUD. Pure drawing — no game state lives here.
+// All on-screen text/overlay drawing: the menu and the in-race HUD.
+// Pure drawing — no game state lives here. (The Phase-1 placeholder floor is
+// gone now that track.js draws the real track.)
 
 import { CONFIG } from './config.js';
 
@@ -24,19 +25,7 @@ export const UI = {
     ctx.fillText('Cocolito Collective  ·  20 Games Challenge  ·  Game 4', W / 2, H - 28);
   },
 
-  // Temporary motion reference so speed is readable on an empty floor.
-  // Replaced by the actual track art in Phase 2.
-  drawFloor(ctx, W, H) {
-    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-    ctx.lineWidth = 1;
-    const step = 40;
-    ctx.beginPath();
-    for (let x = step; x < W; x += step) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
-    for (let y = step; y < H; y += step) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
-    ctx.stroke();
-  },
-
-  drawHud(ctx, W, H, car) {
+  drawHud(ctx, W, H, car, onTrack) {
     const { DIM, ACCENT, FONT } = CONFIG.HUD;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
@@ -58,6 +47,11 @@ export const UI = {
       ctx.fillRect(bx, by, bw, bh);
       ctx.fillStyle = car.speed < 0 ? '#e0723a' : ACCENT;
       ctx.fillRect(bx, by, bw * frac, bh);
+
+      // surface readout so the on/off-track test is visible while testing
+      ctx.font = `13px ${FONT}`;
+      ctx.fillStyle = onTrack ? DIM : '#e0723a';
+      ctx.fillText(onTrack ? 'on track' : 'OFF TRACK — slow', 12, 72);
     }
   },
 };
