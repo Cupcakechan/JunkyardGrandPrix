@@ -58,6 +58,13 @@ export const CONFIG = {
     FINISH: { X: 400, WIDTH: 30, SQUARE: 15, LIGHT: '#e8e2d2', DARK: '#1c1a16' },
   },
 
+  // Race rules (Phase 3). The finish line + checkpoint geometry is DERIVED from
+  // TRACK inside race.js (WIDTH stays the single feel knob), so the only race
+  // value worth tuning lives here.
+  RACE: {
+    LAPS: 3,                // laps to win
+  },
+
   HUD: {
     TEXT: '#e9e2d0',
     DIM: '#8a8270',

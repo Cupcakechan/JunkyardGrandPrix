@@ -1,9 +1,16 @@
 // ui.js
-// All on-screen text/overlay drawing: the menu and the in-race HUD.
-// Pure drawing — no game state lives here. (The Phase-1 placeholder floor is
-// gone now that track.js draws the real track.)
+// All on-screen text/overlay drawing: the menu, the in-race HUD, and the win
+// screen. Pure drawing — no game state lives here.
 
 import { CONFIG } from './config.js';
+
+// mm:ss.cs — the race clock, shared by the HUD and the win screen.
+function formatTime(t) {
+  const m = Math.floor(t / 60);
+  const s = Math.floor(t % 60);
+  const cs = Math.floor((t * 100) % 100);
+  return `${m}:${String(s).padStart(2, '0')}.${String(cs).padStart(2, '0')}`;
+}
 
 export const UI = {
   drawMenu(ctx, W, H) {
@@ -25,14 +32,24 @@ export const UI = {
     ctx.fillText('Cocolito Collective  ·  20 Games Challenge  ·  Game 4', W / 2, H - 28);
   },
 
-  drawHud(ctx, W, H, car, onTrack) {
-    const { DIM, ACCENT, FONT } = CONFIG.HUD;
+  drawHud(ctx, W, H, car, onTrack, race) {
+    const { TEXT, DIM, ACCENT, FONT } = CONFIG.HUD;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
 
     ctx.fillStyle = DIM;
     ctx.font = `13px ${FONT}`;
     ctx.fillText('Arrows / WASD  drive    R  restart    Esc  menu', 12, 10);
+
+    // lap counter + race clock, top-right
+    ctx.textAlign = 'right';
+    ctx.fillStyle = ACCENT;
+    ctx.font = `bold 20px ${FONT}`;
+    ctx.fillText(`LAP ${race.lap}/${race.laps}`, W - 12, 10);
+    ctx.fillStyle = TEXT;
+    ctx.font = `16px ${FONT}`;
+    ctx.fillText(formatTime(race.time), W - 12, 36);
+    ctx.textAlign = 'left';
 
     if (CONFIG.DEBUG.SHOW_SPEED) {
       const spd = Math.round(car.speed);
@@ -53,5 +70,29 @@ export const UI = {
       ctx.fillStyle = onTrack ? DIM : '#e0723a';
       ctx.fillText(onTrack ? 'on track' : 'OFF TRACK — slow', 12, 72);
     }
+  },
+
+  // Win overlay, drawn over the frozen race frame.
+  drawWin(ctx, W, H, race) {
+    const { TEXT, DIM, ACCENT, FONT } = CONFIG.HUD;
+
+    ctx.fillStyle = 'rgba(10, 8, 6, 0.72)';   // dim the scene behind the result
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    ctx.fillStyle = ACCENT;
+    ctx.font = `bold 52px ${FONT}`;
+    ctx.fillText('YOU WIN!', W / 2, H / 2 - 60);
+
+    ctx.fillStyle = TEXT;
+    ctx.font = `24px ${FONT}`;
+    ctx.fillText(`Time  ${formatTime(race.time)}`, W / 2, H / 2);
+
+    ctx.fillStyle = DIM;
+    ctx.font = `16px ${FONT}`;
+    ctx.fillText(`${race.laps} laps · Junkyard Grand Prix`, W / 2, H / 2 + 34);
+    ctx.fillText('ENTER / R  race again      Esc  menu', W / 2, H / 2 + 64);
   },
 };
