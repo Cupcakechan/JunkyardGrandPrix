@@ -1,6 +1,6 @@
 // ui.js
-// All on-screen text/overlay drawing: the menu, the in-race HUD, and the win
-// screen. Pure drawing — no game state lives here.
+// In-race overlay drawing: the HUD and the win screen. (The menu/title screens
+// live in menu.js now.) Pure drawing — no game state lives here.
 
 import { CONFIG } from './config.js';
 
@@ -13,25 +13,6 @@ function formatTime(t) {
 }
 
 export const UI = {
-  drawMenu(ctx, W, H) {
-    const { TEXT, DIM, ACCENT, FONT } = CONFIG.HUD;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    ctx.fillStyle = ACCENT;
-    ctx.font = `bold 46px ${FONT}`;
-    ctx.fillText('JUNKYARD GRAND PRIX', W / 2, H / 2 - 70);
-
-    ctx.fillStyle = TEXT;
-    ctx.font = `20px ${FONT}`;
-    ctx.fillText('Press ENTER to drive', W / 2, H / 2);
-
-    ctx.fillStyle = DIM;
-    ctx.font = `14px ${FONT}`;
-    ctx.fillText('Arrows / WASD  drive      R  restart      Esc  menu', W / 2, H / 2 + 50);
-    ctx.fillText('Cocolito Collective  ·  20 Games Challenge  ·  Game 4', W / 2, H - 28);
-  },
-
   drawHud(ctx, W, H, car, onTrack, race) {
     const { TEXT, DIM, ACCENT, FONT } = CONFIG.HUD;
     ctx.textAlign = 'left';

@@ -23,6 +23,13 @@ export const Assets = {
     loadImage('car');
     loadImage('scenery');   // 800x600 stitched junkyard ground (base layer)
     loadImage('asphalt');   // small seamless tile, repeated across the track ring
+
+    // menu buttons: a normal + hover sprite per id (missing ones fall back to
+    // flat labelled rects, so the menu works before any art is in)
+    for (const id of ['start', 'howtoplay', 'highscores', 'shop', 'settings']) {
+      loadImage('btn_' + id);
+      loadImage('btn_' + id + '_hover');
+    }
   },
 
   // The decoded image for id, or null if it isn't ready (missing, failed, or

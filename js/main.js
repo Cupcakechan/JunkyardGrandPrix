@@ -1,7 +1,8 @@
 // main.js
-// Entry point: sets up the canvas, the fixed-timestep loop, the tiny state
-// machine (MENU <-> PLAYING -> WIN), wires input, and owns the car, the track,
-// and the race (laps / checkpoint / timer / win).
+// Entry point: canvas + fixed-timestep loop + the screen router. Screens are
+// 'mainMenu' | 'howToPlay' | 'comingSoon' | 'play' | 'win'. The menu screens
+// live in menu.js; the play/win screens are wired here since they own the car,
+// track, and race.
 
 import { CONFIG } from './config.js';
 import { Input } from './input.js';
@@ -10,6 +11,7 @@ import { Track } from './track.js';
 import { Race } from './race.js';
 import { Assets } from './assets.js';
 import { UI } from './ui.js';
+import { MainMenu, HowToPlay, ComingSoon } from './menu.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -21,62 +23,87 @@ ctx.imageSmoothingEnabled = false;  // keep pixel art crisp (resizing the canvas
 const W = canvas.width;
 const H = canvas.height;
 
-let state = 'MENU';                 // 'MENU' | 'PLAYING' | 'WIN'
+Input.init(canvas);                 // mouse → canvas-space coords + click one-shot
+Assets.load();                      // begin loading sprites; draws use placeholders until ready
+
 const car = new Car();
 
-Assets.load();                      // begin loading sprites; draws use placeholders until each is ready
+let screen = 'mainMenu';            // 'mainMenu' | 'howToPlay' | 'comingSoon' | 'play' | 'win'
 
 function startRace() {
   const S = CONFIG.TRACK.START;
   car.reset(S.X, S.Y, S.HEADING);   // on the start/finish line, facing along the track
   Race.reset(car);                  // lap -> 1, clock -> 0, checkpoint disarmed
-  state = 'PLAYING';
+  screen = 'play';
+}
+
+// Single place that changes screen, so pending one-shots never leak across.
+function goTo(name, arg) {
+  Input.clearOneShots();
+  if (name === 'comingSoon') ComingSoon.enter(arg);
+  if (name === 'play') { startRace(); return; }
+  screen = name;
+}
+
+function handleMenuAction(item) {
+  if (item.target === 'play')           goTo('play');
+  else if (item.target === 'howToPlay') goTo('howToPlay');
+  else if (item.target === 'comingSoon') goTo('comingSoon', item.label);
 }
 
 // --- fixed timestep so the driving feel is identical on any refresh rate ---
-const STEP = 1 / 60;                // physics advances in 1/60 s chunks
+const STEP = 1 / 60;
 let accumulator = 0;
 let last = performance.now();
 
 function update(dt) {
-  if (state === 'MENU') {
-    if (Input.consume('start')) startRace();
-    return;
+  switch (screen) {
+    case 'mainMenu': {
+      const item = MainMenu.update(Input);
+      if (item) handleMenuAction(item);
+      break;
+    }
+    case 'howToPlay':
+      if (HowToPlay.update(Input)) goTo('mainMenu');
+      break;
+    case 'comingSoon':
+      if (ComingSoon.update(Input)) goTo('mainMenu');
+      break;
+    case 'play': {
+      if (Input.consume('menu'))    { goTo('mainMenu'); break; }
+      if (Input.consume('restart')) { startRace(); break; }
+      const onTrack = Track.isOnTrack(car.x, car.y);
+      car.update(dt, Input, { w: W, h: H }, onTrack);
+      Race.update(dt, car);         // lap / checkpoint / timer; flips finished on the win lap
+      if (Race.finished) screen = 'win';
+      break;
+    }
+    case 'win': {
+      const again = Input.consume('restart');
+      const start = Input.consume('start');
+      if (again || start)           { startRace(); break; }
+      if (Input.consume('menu'))    { goTo('mainMenu'); break; }
+      break;
+    }
   }
-
-  if (state === 'WIN') {
-    // Enter or R races again; Esc returns to the menu.
-    const again = Input.consume('restart');
-    const start = Input.consume('start');
-    if (again || start) { startRace(); return; }
-    if (Input.consume('menu')) { state = 'MENU'; return; }
-    return;
-  }
-
-  // PLAYING
-  if (Input.consume('menu'))    { state = 'MENU'; return; }
-  if (Input.consume('restart')) { startRace(); return; }
-
-  const onTrack = Track.isOnTrack(car.x, car.y);
-  car.update(dt, Input, { w: W, h: H }, onTrack);
-  Race.update(dt, car);             // lap / checkpoint / timer; flips finished on the win lap
-  if (Race.finished) state = 'WIN';
 }
 
 function render() {
   ctx.fillStyle = CONFIG.CANVAS.BG;
   ctx.fillRect(0, 0, W, H);
 
-  if (state === 'MENU') {
-    UI.drawMenu(ctx, W, H);
-    return;
+  switch (screen) {
+    case 'mainMenu':   MainMenu.draw(ctx);  break;
+    case 'howToPlay':  HowToPlay.draw(ctx); break;
+    case 'comingSoon': ComingSoon.draw(ctx); break;
+    case 'play':
+    case 'win':
+      Track.draw(ctx, W, H);
+      car.draw(ctx);
+      UI.drawHud(ctx, W, H, car, Track.isOnTrack(car.x, car.y), Race);
+      if (screen === 'win') UI.drawWin(ctx, W, H, Race);
+      break;
   }
-
-  // PLAYING and WIN both draw the live scene; WIN lays the result over a frozen frame.
-  Track.draw(ctx, W, H);
-  car.draw(ctx);
-  UI.drawHud(ctx, W, H, car, Track.isOnTrack(car.x, car.y), Race);
-  if (state === 'WIN') UI.drawWin(ctx, W, H, Race);
 }
 
 function frame(now) {
