@@ -1,0 +1,10 @@
+# Dependencies / caches (none expected for a no-build HTML game, but just in case)
+node_modules/
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# OS cruft
+.DS_Store
+Thumbs.db

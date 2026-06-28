@@ -1,0 +1,25 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  background: #0c0b09;            /* darker than the floor, frames the canvas */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: monospace;
+}
+
+canvas#game {
+  image-rendering: pixelated;     /* crisp scaling — matters once pixel art lands */
+  background: #15130f;
+  /* only max- constraints, so the 800x600 aspect ratio is preserved while it
+     shrinks to fit smaller screens. Integer/DPR scaling is a later polish item. */
+  max-width: 96vw;
+  max-height: 92vh;
+  box-shadow: 0 0 0 2px #2a2620, 0 12px 40px rgba(0, 0, 0, 0.6);
+}
