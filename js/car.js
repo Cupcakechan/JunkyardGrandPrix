@@ -7,6 +7,7 @@
 // therefore (sin heading, -cos heading).
 
 import { CONFIG } from './config.js';
+import { Assets } from './assets.js';
 
 export class Car {
   constructor() {
@@ -87,16 +88,24 @@ export class Car {
     ctx.translate(this.x, this.y);
     ctx.rotate(this.heading);                 // 0 = up; +heading = clockwise
 
-    ctx.fillStyle = C.COLOR_BODY;
-    ctx.fillRect(-r, -r, s, s);
+    const sprite = Assets.image('car');
+    if (sprite) {
+      // real art: authored nose-up at SIZE×SIZE, so it shares the placeholder's
+      // local frame and the same rotation reads correctly in every direction
+      ctx.drawImage(sprite, -r, -r, s, s);
+    } else {
+      // placeholder until assets/car.png exists (graceful fallback)
+      ctx.fillStyle = C.COLOR_BODY;
+      ctx.fillRect(-r, -r, s, s);
 
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = C.COLOR_OUTLINE;
-    ctx.strokeRect(-r, -r, s, s);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = C.COLOR_OUTLINE;
+      ctx.strokeRect(-r, -r, s, s);
 
-    // bright strip along the FRONT edge (top in local space) = facing indicator
-    ctx.fillStyle = C.COLOR_NOSE;
-    ctx.fillRect(-r + 5, -r + 3, s - 10, 7);
+      // bright strip along the FRONT edge (top in local space) = facing indicator
+      ctx.fillStyle = C.COLOR_NOSE;
+      ctx.fillRect(-r + 5, -r + 3, s - 10, 7);
+    }
 
     ctx.restore();
   }

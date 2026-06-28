@@ -8,6 +8,7 @@ import { Input } from './input.js';
 import { Car } from './car.js';
 import { Track } from './track.js';
 import { Race } from './race.js';
+import { Assets } from './assets.js';
 import { UI } from './ui.js';
 
 const canvas = document.getElementById('game');
@@ -16,11 +17,14 @@ const ctx = canvas.getContext('2d');
 // canvas backing-store size comes from CONFIG (single source of truth)
 canvas.width = CONFIG.CANVAS.WIDTH;
 canvas.height = CONFIG.CANVAS.HEIGHT;
+ctx.imageSmoothingEnabled = false;  // keep pixel art crisp (resizing the canvas resets this, so set it after)
 const W = canvas.width;
 const H = canvas.height;
 
 let state = 'MENU';                 // 'MENU' | 'PLAYING' | 'WIN'
 const car = new Car();
+
+Assets.load();                      // begin loading sprites; draws use placeholders until each is ready
 
 function startRace() {
   const S = CONFIG.TRACK.START;
