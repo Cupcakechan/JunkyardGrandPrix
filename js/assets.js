@@ -21,6 +21,8 @@ export const Assets = {
   // Kick off loading. Call once at startup.
   load() {
     loadImage('car');
+    loadImage('scenery');   // 800x600 stitched junkyard ground (base layer)
+    loadImage('asphalt');   // small seamless tile, repeated across the track ring
   },
 
   // The decoded image for id, or null if it isn't ready (missing, failed, or

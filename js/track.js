@@ -8,6 +8,7 @@
 // in sync. Band width is constant because inner.R = outer.R - WIDTH.
 
 import { CONFIG } from './config.js';
+import { Assets } from './assets.js';
 
 const T = CONFIG.TRACK;
 const OUTER = T.OUTER;
@@ -41,6 +42,21 @@ function insideRoundedRect(px, py, x, y, w, h, r) {
   return dx * dx + dy * dy <= r * r;
 }
 
+// Asphalt fill: a seamless tile (assets/asphalt.png) repeated across the ring,
+// built once and cached. Returns null until the tile is loaded, so the caller
+// falls back to the flat asphalt colour.
+let asphaltPattern = null;
+function asphaltFill(ctx) {
+  if (!asphaltPattern) {
+    const img = Assets.image('asphalt');
+    if (img) {
+      const p = ctx.createPattern(img, 'repeat');
+      if (p) asphaltPattern = p;
+    }
+  }
+  return asphaltPattern;
+}
+
 export const Track = {
   // On the asphalt = inside the outer ring AND outside the inner hole.
   isOnTrack(px, py) {
@@ -49,15 +65,22 @@ export const Track = {
   },
 
   draw(ctx, W, H) {
-    // rough dirt everywhere (off-track ground)
-    ctx.fillStyle = T.DIRT;
-    ctx.fillRect(0, 0, W, H);
+    // ground layer: the stitched junkyard scenery if present, else flat dirt
+    const scenery = Assets.image('scenery');
+    if (scenery) {
+      ctx.drawImage(scenery, 0, 0, W, H);
+    } else {
+      ctx.fillStyle = T.DIRT;
+      ctx.fillRect(0, 0, W, H);
+    }
 
-    // asphalt ring (outer minus inner) in one even-odd fill
+    // asphalt ring (outer minus inner) in one even-odd fill — a seamless tile if
+    // loaded, else the flat asphalt colour. Reusing the collision path as the
+    // fill region keeps the art aligned to the on/off-track test for free.
     ctx.beginPath();
     addRoundRect(ctx, OUTER.X, OUTER.Y, OUTER.W, OUTER.H, OUTER.R);
     addRoundRect(ctx, INNER.X, INNER.Y, INNER.W, INNER.H, INNER.R);
-    ctx.fillStyle = T.ASPHALT;
+    ctx.fillStyle = asphaltFill(ctx) || T.ASPHALT;
     ctx.fill('evenodd');
 
     // edge stripes along both rims so the track reads clearly
