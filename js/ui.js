@@ -14,11 +14,11 @@ function formatTime(t) {
 
 export const UI = {
   drawHud(ctx, W, H, car, onTrack, race) {
-    const { TEXT, DIM, ACCENT, FONT } = CONFIG.HUD;
+    const { TEXT, DIM, ACCENT, HINT, FONT } = CONFIG.HUD;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
 
-    ctx.fillStyle = DIM;
+    ctx.fillStyle = HINT;
     ctx.font = `13px ${FONT}`;
     ctx.fillText('Arrows / WASD  drive    R  restart    Esc  menu    M  mute', 12, 10);
 

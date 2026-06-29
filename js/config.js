@@ -69,6 +69,7 @@ export const CONFIG = {
     TEXT: '#e9e2d0',
     DIM: '#8a8270',
     ACCENT: '#ffd27f',
+    HINT: '#33281c',        // dark muted text for the in-race controls hint (reads on the sandy ground)
     FONT: 'monospace',
   },
 
