@@ -11,11 +11,11 @@
 // --- playlist: add songs here; names must match the files in assets/music/ exactly ---
 const MUSIC_DIR = 'assets/music/';
 const MUSIC = [
-  'EDM Music - Cloud Dimension (Loopable).mp3',
-  'EDM Music - Etherwave (Loopable).mp3',
-  'EDM Music - Neon Core (Loopable).mp3',
-  'EDM Music - Travelling Down the Hyperlane (Loopable).mp3',
-  'EDM Music - Vector Speedrunner (Loopable).mp3',
+  'cloud-dimension.mp3',
+  'etherwave.mp3',
+  'neon-core.mp3',
+  'travelling-down-the-hyperlane.mp3',
+  'vector-speedrunner.mp3',
 ];
 
 // --- SFX clips (looped; modulated while driving) ---
