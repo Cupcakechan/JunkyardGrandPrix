@@ -8,7 +8,7 @@ const down = new Set();                       // physical key codes currently he
 
 // one-shot press flags, set on key-DOWN transition, cleared when consumed
 const pressed = {
-  start: false, restart: false, menu: false, mute: false,  // gameplay one-shots
+  start: false, restart: false, menu: false, mute: false, devTrack: false,  // gameplay one-shots
   confirm: false, back: false,                 // menu activate / back
   navUp: false, navDown: false,                // menu selection move
   click: false,                                // left mouse pressed
@@ -20,7 +20,7 @@ const HELD = {                                // code -> drive action
   ArrowLeft: 'left', KeyA: 'left',
   ArrowRight: 'right', KeyD: 'right',
 };
-const ONESHOT = { Enter: 'start', KeyR: 'restart', Escape: 'menu', KeyM: 'mute' };
+const ONESHOT = { Enter: 'start', KeyR: 'restart', Escape: 'menu', KeyM: 'mute', KeyT: 'devTrack' };
 // menu one-shots; codes deliberately overlap the drive keys (Up/W, Down/S) and
 // the gameplay one-shots (Enter, Escape) — both flags fire, each screen consumes
 // only the ones it cares about, and transitions clear the rest.

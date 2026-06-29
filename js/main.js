@@ -60,6 +60,7 @@ let last = performance.now();
 
 function update(dt) {
   if (Input.consume('mute')) Sound.toggleMute();
+  if (Input.consume('devTrack')) { Track.cycle(); startRace(); }  // dev: cycle track shape
 
   switch (screen) {
     case 'mainMenu': {

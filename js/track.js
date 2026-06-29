@@ -68,7 +68,57 @@ function buildOvalTrack() {
   };
 }
 
-let current = buildOvalTrack();
+// Derive a finish/checkpoint line + spawn from a centerline index: a segment
+// perpendicular to the local direction, spanning a bit past the track rims.
+function lineAt(centerline, i, width) {
+  const n = centerline.length;
+  const P = centerline[i];
+  const prev = centerline[(i - 1 + n) % n], next = centerline[(i + 1) % n];
+  let dx = next.x - prev.x, dy = next.y - prev.y;
+  const len = Math.hypot(dx, dy) || 1;
+  dx /= len; dy /= len;                     // unit tangent (the lap direction here)
+  const nx = -dy, ny = dx;                  // unit normal (across the track)
+  const h = width / 2 + 2;
+  return {
+    point: P,
+    dir: { x: dx, y: dy },
+    a: { x: P.x - nx * h, y: P.y - ny * h },
+    b: { x: P.x + nx * h, y: P.y + ny * h },
+  };
+}
+
+// A Gerono lemniscate figure-8, centered, crossing itself in the middle. Gentle
+// tips (radius = a) and a ~perpendicular center crossing, so width 120 fits.
+function buildFigure8Centerline() {
+  const cx = 400, cy = 300, a = 260, N = 120;
+  const pts = [];
+  for (let i = 0; i < N; i++) {
+    const t = (i / N) * 2 * Math.PI;
+    pts.push({ x: cx + a * Math.cos(t), y: cy + (a / 2) * Math.sin(2 * t) });
+  }
+  return pts;
+}
+
+function buildFigure8Track() {
+  const centerline = buildFigure8Centerline();
+  const width = T.WIDTH;
+  const n = centerline.length;
+  const fin = lineAt(centerline, 15, width);              // a clear strand on one loop
+  const cp = lineAt(centerline, (15 + n / 2) % n, width); // halfway round = the far loop
+  return {
+    name: 'figure8',
+    centerline,
+    width,
+    spawn: { x: fin.point.x, y: fin.point.y, heading: Math.atan2(fin.dir.x, -fin.dir.y) },
+    finish: { a: fin.a, b: fin.b, forward: fin.dir },
+    checkpoint: { a: cp.a, b: cp.b },
+  };
+}
+
+// track registry — the dev key cycles these; a real selector arrives in Phase 6
+const TRACKS = [buildOvalTrack(), buildFigure8Track()];
+let trackIndex = 0;
+let current = TRACKS[trackIndex];
 
 // --- point-to-polyline distance (centerline is a closed loop) ---
 function distToSegment(px, py, ax, ay, bx, by) {
@@ -102,6 +152,13 @@ function asphaltFill(ctx) {
 
 export const Track = {
   get current() { return current; },   // active track data (read by race.js / main.js)
+
+  // dev: cycle to the next track shape (Phase 6 replaces this with a real selector)
+  cycle() {
+    trackIndex = (trackIndex + 1) % TRACKS.length;
+    current = TRACKS[trackIndex];
+    return current;
+  },
 
   // on the asphalt = within half the track width of the centerline
   isOnTrack(px, py) {

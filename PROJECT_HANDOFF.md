@@ -161,6 +161,11 @@ Choose-Vehicle screens.
 Menu screens still stubbed ("Coming soon") light up as their phase lands: Game
 Mode → P6, Settings → P7, Shop + Choose Vehicle → P8, Highscores → modes + save.
 
+**Backlog / ideas (unscheduled):**
+- **Wayfinding indicator** — a glowing directional cue (next-checkpoint arrow or a
+  racing-line guide) so the way forward is obvious; especially wanted on the
+  figure-8 and future twisty tracks, where direction can get confusing.
+
 ## 10. Working-method reminders
 - Options before code; one system per pass; test, then git checkpoint, then
   "ready for the next?". (No per-feature DevLog entries for this project.)
