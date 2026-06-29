@@ -104,16 +104,14 @@ JunkyardGrandPrix/
   native aspect (uniform width), **not** runtime 9-sliced (that would distort the
   baked text). Hover sprite is drawn at the same scale/center so its glow blooms
   around the same body; missing art → flat labelled fallback.
-- Audio **Option A (HTML5)** over Web Audio for MVP; shuffle-bag jukebox; engine
-  pitch via `playbackRate`. If the mp3 loop seam on the engine bugs us, upgrade
-  just the engine to Web Audio (localized change).
+- Audio is split by job: **music = HTML5 `<audio>`** (shuffle-bag jukebox; needs
+  the `ended` hook + streaming), **SFX loops (engine, tire) = Web Audio API** (an
+  mp3 in an HTML5 `loop` clicks at the seam, so the decoded buffers loop sample-
+  accurately instead). Pitch via `playbackRate`; a shared mute-gain gates the SFX.
 - Asset filenames are web-safe (lowercase, no spaces) — itch is case-sensitive.
 
 ## 7. Known rough edges
 - `DEBUG.SHOW_SPEED` is ON — turn OFF before shipping (`config.js > DEBUG`).
-- mp3 loops can click faintly at the seam (engine/tire) — the Option-A tradeoff;
-  Web Audio is the upgrade path if it's audible.
-- No menu `background.png` yet (menu draws a dark fill until one is added).
 - Window scaling is minimal (CSS max- only). itch fullscreen runs but won't FILL
   a large screen until we add a scale-up pass — a pre-ship polish item.
 - No deploy script yet.
