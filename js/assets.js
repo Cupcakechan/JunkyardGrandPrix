@@ -24,6 +24,7 @@ export const Assets = {
     loadImage('scenery');     // 800x600 stitched junkyard ground (base layer)
     loadImage('asphalt');     // small seamless tile, repeated across the track ring
     loadImage('background');  // 800x600 menu backdrop
+    loadImage('title');       // menu title-card logo (text fallback until present)
 
     // menu buttons: a normal + hover sprite per id (missing ones fall back to
     // flat labelled rects, so the menu works before any art is in)

@@ -64,12 +64,21 @@ function drawBackground(ctx) {
   if (bg) ctx.drawImage(bg, 0, 0, W, H);   // else the dark fill from main.js shows through
 }
 
+// title card if present (scaled to fit a top band so it never crowds the buttons),
+// else the text title as a fallback
 function drawTitle(ctx) {
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = CONFIG.HUD.ACCENT;
-  ctx.font = `bold 40px ${CONFIG.HUD.FONT}`;
-  ctx.fillText('JUNKYARD GRAND PRIX', W / 2, 80);
+  const img = Assets.image('title');
+  if (img) {
+    const scale = Math.min(620 / img.width, 120 / img.height, 1);
+    const w = img.width * scale, h = img.height * scale;
+    ctx.drawImage(img, (W - w) / 2, 78 - h / 2, w, h);
+  } else {
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = CONFIG.HUD.ACCENT;
+    ctx.font = `bold 40px ${CONFIG.HUD.FONT}`;
+    ctx.fillText('JUNKYARD GRAND PRIX', W / 2, 78);
+  }
 }
 
 export const MainMenu = {
