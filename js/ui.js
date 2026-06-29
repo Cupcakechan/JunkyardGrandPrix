@@ -20,7 +20,7 @@ export const UI = {
 
     ctx.fillStyle = DIM;
     ctx.font = `13px ${FONT}`;
-    ctx.fillText('Arrows / WASD  drive    R  restart    Esc  menu', 12, 10);
+    ctx.fillText('Arrows / WASD  drive    R  restart    Esc  menu    M  mute', 12, 10);
 
     // lap counter + race clock, top-right
     ctx.textAlign = 'right';

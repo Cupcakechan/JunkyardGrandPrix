@@ -153,6 +153,7 @@ export const HowToPlay = {
       'Cross the start line each lap going forward; you must pass',
       'the far checkpoint first, so every lap counts honestly.',
       'Finish 3 laps to win. The clock starts when you hit the gas.',
+      'Press M anytime to mute the music.',
       '',
       'Coming soon: Standard Race & Crash & Score modes.',
     ];

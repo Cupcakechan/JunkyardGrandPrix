@@ -10,6 +10,7 @@ import { Car } from './car.js';
 import { Track } from './track.js';
 import { Race } from './race.js';
 import { Assets } from './assets.js';
+import { Sound } from './audio.js';
 import { UI } from './ui.js';
 import { MainMenu, HowToPlay, ComingSoon } from './menu.js';
 
@@ -24,6 +25,7 @@ const W = canvas.width;
 const H = canvas.height;
 
 Input.init(canvas);                 // mouse → canvas-space coords + click one-shot
+Sound.init();                       // installs the first-gesture audio unlock
 Assets.load();                      // begin loading sprites; draws use placeholders until ready
 
 const car = new Car();
@@ -57,6 +59,8 @@ let accumulator = 0;
 let last = performance.now();
 
 function update(dt) {
+  if (Input.consume('mute')) Sound.toggleMute();
+
   switch (screen) {
     case 'mainMenu': {
       const item = MainMenu.update(Input);
@@ -75,6 +79,9 @@ function update(dt) {
       const onTrack = Track.isOnTrack(car.x, car.y);
       car.update(dt, Input, { w: W, h: H }, onTrack);
       Race.update(dt, car);         // lap / checkpoint / timer; flips finished on the win lap
+      const frac = Math.min(1, Math.abs(car.speed) / CONFIG.CAR.MAX_SPEED);
+      Sound.engineLevel(frac);      // engine revs with speed
+      Sound.tire(!onTrack && Math.abs(car.speed) > 20);  // tire/dirt while bogging off-track
       if (Race.finished) screen = 'win';
       break;
     }
@@ -86,6 +93,8 @@ function update(dt) {
       break;
     }
   }
+
+  if (screen !== 'play') { Sound.engineOff(); Sound.tire(false); }  // engine/tire quiet off the track
 }
 
 function render() {
