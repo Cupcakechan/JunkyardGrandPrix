@@ -59,6 +59,11 @@ function drawButton(ctx, r, id, label, selected) {
   }
 }
 
+function drawBackground(ctx) {
+  const bg = Assets.image('background');
+  if (bg) ctx.drawImage(bg, 0, 0, W, H);   // else the dark fill from main.js shows through
+}
+
 function drawTitle(ctx) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -119,6 +124,7 @@ export const MainMenu = {
   },
 
   draw(ctx) {
+    drawBackground(ctx);
     drawTitle(ctx);
     const rects = this.layout();
     for (let i = 0; i < this.items.length; i++) {
@@ -138,6 +144,7 @@ export const HowToPlay = {
     return input.consume('back') || input.consume('click');
   },
   draw(ctx) {
+    drawBackground(ctx);
     const { TEXT, DIM, ACCENT, FONT } = CONFIG.HUD;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
@@ -175,6 +182,7 @@ export const ComingSoon = {
     return input.consume('back') || input.consume('click');
   },
   draw(ctx) {
+    drawBackground(ctx);
     const { TEXT, DIM, ACCENT, FONT } = CONFIG.HUD;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';

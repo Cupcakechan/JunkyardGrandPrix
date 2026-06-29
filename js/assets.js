@@ -21,8 +21,9 @@ export const Assets = {
   // Kick off loading. Call once at startup.
   load() {
     loadImage('car');
-    loadImage('scenery');   // 800x600 stitched junkyard ground (base layer)
-    loadImage('asphalt');   // small seamless tile, repeated across the track ring
+    loadImage('scenery');     // 800x600 stitched junkyard ground (base layer)
+    loadImage('asphalt');     // small seamless tile, repeated across the track ring
+    loadImage('background');  // 800x600 menu backdrop
 
     // menu buttons: a normal + hover sprite per id (missing ones fall back to
     // flat labelled rects, so the menu works before any art is in)
