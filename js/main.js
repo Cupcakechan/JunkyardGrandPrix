@@ -33,8 +33,8 @@ const car = new Car();
 let screen = 'mainMenu';            // 'mainMenu' | 'howToPlay' | 'comingSoon' | 'play' | 'win'
 
 function startRace() {
-  const S = CONFIG.TRACK.START;
-  car.reset(S.X, S.Y, S.HEADING);   // on the start/finish line, facing along the track
+  const s = Track.current.spawn;    // per-track spawn (on the start line, facing along)
+  car.reset(s.x, s.y, s.heading);
   Race.reset(car);                  // lap -> 1, clock -> 0, checkpoint disarmed
   screen = 'play';
 }

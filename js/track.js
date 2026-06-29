@@ -1,13 +1,14 @@
 // track.js
-// The drivable track as DATA (Phase 5, Route 1): a centerline polyline + a width.
-// One source drives everything — on-track = distance(car, centerline) <= width/2,
-// and the road is drawn by stroking that same centerline with the asphalt pattern,
-// so what you see is exactly where you can drive.
+// The drivable track as DATA (Phase 5, Route 1): a centerline polyline + width,
+// plus the per-track spawn, finish line, and checkpoint line. One source drives
+// everything — on-track = distance(car, centerline) <= width/2, the road is the
+// same centerline stroked with the asphalt pattern, and laps come from crossing
+// the finish/checkpoint line segments (see race.js).
 //
 // The current track is the original oval, reproduced as a finely-sampled rounded-
-// rect centerline (the mid-band rect: OUTER inset by WIDTH/2, corner radius 100).
-// Stroked at width 120 it yields the same outer R160 / inner R40 band as before,
-// and distance <= 60 reproduces the old analytic on/off-track test within ~0.2 px.
+// rect centerline (mid-band rect: OUTER inset by WIDTH/2, radius 100). Its spawn /
+// finish / checkpoint are sourced from CONFIG.TRACK so config stays the tunable
+// source; future shapes define their own.
 
 import { CONFIG } from './config.js';
 import { Assets } from './assets.js';
@@ -15,9 +16,8 @@ import { Assets } from './assets.js';
 const T = CONFIG.TRACK;
 const OUTER = T.OUTER;
 
-// Build the oval centerline: the rounded-rect down the middle of the band.
-// Straights fall out as single segments between corners; each 90° corner is
-// sampled into short chords (sub-pixel deviation from a true arc).
+// Oval centerline: the rounded-rect down the middle of the band. Straights fall
+// out as single segments; each 90° corner is sampled into short chords.
 function buildOvalCenterline() {
   const X = OUTER.X + T.WIDTH / 2;
   const Y = OUTER.Y + T.WIDTH / 2;
@@ -41,8 +41,34 @@ function buildOvalCenterline() {
   return pts;
 }
 
-// the active track (just the oval for now; a registry of shapes comes next step)
-const current = { centerline: buildOvalCenterline(), width: T.WIDTH };
+// Package the oval as a track: centerline + width + spawn + finish/checkpoint
+// lines. Finish is a segment across the bottom band crossed moving +X (lap dir);
+// checkpoint is a segment across the top band that arms the lap.
+function buildOvalTrack() {
+  const S = CONFIG.TRACK.START;
+  const fx = CONFIG.TRACK.FINISH.X;
+  const bandBottomInner = OUTER.Y + OUTER.H - T.WIDTH;  // 420
+  const bandBottomOuter = OUTER.Y + OUTER.H;            // 540
+  const bandTopOuter = OUTER.Y;                         // 60
+  const bandTopInner = OUTER.Y + T.WIDTH;               // 180
+  return {
+    name: 'oval',
+    centerline: buildOvalCenterline(),
+    width: T.WIDTH,
+    spawn: { x: S.X, y: S.Y, heading: S.HEADING },
+    finish: {
+      a: { x: fx, y: bandBottomInner },
+      b: { x: fx, y: bandBottomOuter },
+      forward: { x: 1, y: 0 },          // a valid lap crosses moving +X
+    },
+    checkpoint: {
+      a: { x: fx, y: bandTopOuter },
+      b: { x: fx, y: bandTopInner },
+    },
+  };
+}
+
+let current = buildOvalTrack();
 
 // --- point-to-polyline distance (centerline is a closed loop) ---
 function distToSegment(px, py, ax, ay, bx, by) {
@@ -75,6 +101,8 @@ function asphaltFill(ctx) {
 }
 
 export const Track = {
+  get current() { return current; },   // active track data (read by race.js / main.js)
+
   // on the asphalt = within half the track width of the centerline
   isOnTrack(px, py) {
     return distToCenterline(px, py) <= current.width / 2;
@@ -107,21 +135,26 @@ export const Track = {
     this._drawFinish(ctx);
   },
 
-  // checkered start/finish strip across the bottom straight (still config-driven;
-  // moves into per-track data in the next step)
+  // checkered start/finish strip, drawn along the track's finish-line segment
+  // (centered on the line, F.WIDTH thick) — works for any orientation.
   _drawFinish(ctx) {
     const F = T.FINISH;
-    const top = OUTER.Y + OUTER.H - T.WIDTH;   // inner rim of the bottom band
-    const bottom = OUTER.Y + OUTER.H;          // outer rim
-    const x0 = F.X - F.WIDTH / 2;
-    const cols = Math.round(F.WIDTH / F.SQUARE);
-    let row = 0;
-    for (let y = top; y < bottom; y += F.SQUARE, row++) {
-      const cellH = Math.min(F.SQUARE, bottom - y);   // clip the last partial row
-      for (let col = 0; col < cols; col++) {
-        ctx.fillStyle = (row + col) % 2 === 0 ? F.LIGHT : F.DARK;
-        ctx.fillRect(x0 + col * F.SQUARE, y, F.SQUARE, cellH);
+    const { a, b } = current.finish;
+    const len = Math.hypot(b.x - a.x, b.y - a.y);
+    const ang = Math.atan2(b.y - a.y, b.x - a.x);
+    const sq = F.SQUARE;
+    const rows = Math.round(len / sq);
+    const cols = Math.max(1, Math.round(F.WIDTH / sq));
+    ctx.save();
+    ctx.translate(a.x, a.y);
+    ctx.rotate(ang);
+    for (let r = 0; r < rows; r++) {
+      const cellW = Math.min(sq, len - r * sq);
+      for (let c = 0; c < cols; c++) {
+        ctx.fillStyle = (r + c) % 2 === 0 ? F.LIGHT : F.DARK;
+        ctx.fillRect(r * sq, -F.WIDTH / 2 + c * sq, cellW, sq);
       }
     }
+    ctx.restore();
   },
 };
