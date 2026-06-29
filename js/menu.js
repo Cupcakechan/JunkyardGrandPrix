@@ -219,9 +219,11 @@ export const GameMode = {
   layout() {
     const rects = [];
     let y = 210;
-    for (let i = 0; i < this.items.length; i++) {
-      rects.push({ x: Math.round((W - BTN_W) / 2), y, w: BTN_W, h: BTN_H_FALLBACK });
-      y += BTN_H_FALLBACK + GAP;
+    for (const it of this.items) {
+      const img = Assets.image('btn_' + it.id);
+      const h = img ? Math.round(BTN_W * img.height / img.width) : BTN_H_FALLBACK;
+      rects.push({ x: Math.round((W - BTN_W) / 2), y, w: BTN_W, h });
+      y += h + GAP;
     }
     return rects;
   },

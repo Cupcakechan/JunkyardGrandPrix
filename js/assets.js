@@ -28,7 +28,7 @@ export const Assets = {
 
     // menu buttons: a normal + hover sprite per id (missing ones fall back to
     // flat labelled rects, so the menu works before any art is in)
-    for (const id of ['start', 'howtoplay', 'highscores', 'shop', 'settings']) {
+    for (const id of ['start', 'howtoplay', 'highscores', 'shop', 'settings', 'race', 'crash']) {
       loadImage('btn_' + id);
       loadImage('btn_' + id + '_hover');
     }
