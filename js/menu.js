@@ -9,6 +9,7 @@
 
 import { CONFIG } from './config.js';
 import { Assets } from './assets.js';
+import { MODES } from './modes.js';
 
 const W = CONFIG.CANVAS.WIDTH;
 const H = CONFIG.CANVAS.HEIGHT;
@@ -83,7 +84,7 @@ function drawTitle(ctx) {
 
 export const MainMenu = {
   items: [
-    { id: 'start',      label: 'START',       target: 'play' },
+    { id: 'start',      label: 'START',       target: 'gameMode' },
     { id: 'howtoplay',  label: 'HOW TO PLAY', target: 'howToPlay' },
     { id: 'highscores', label: 'HIGHSCORES',  target: 'comingSoon' },
     { id: 'shop',       label: 'SHOP',        target: 'comingSoon' },
@@ -204,5 +205,76 @@ export const ComingSoon = {
     ctx.fillStyle = DIM;
     ctx.font = `14px ${FONT}`;
     ctx.fillText('Esc or click — back', W / 2, H - 42);
+  },
+};
+
+// Game Mode select (Phase 6). Lists the mode registry; available modes start a
+// race, unavailable ones show "Coming soon". main.js handles Esc (back).
+export const GameMode = {
+  items: MODES.map((m) => ({ id: m.id, label: m.label, available: m.available })),
+  index: 0,
+  _lastMX: -1,
+  _lastMY: -1,
+
+  layout() {
+    const rects = [];
+    let y = 210;
+    for (let i = 0; i < this.items.length; i++) {
+      rects.push({ x: Math.round((W - BTN_W) / 2), y, w: BTN_W, h: BTN_H_FALLBACK });
+      y += BTN_H_FALLBACK + GAP;
+    }
+    return rects;
+  },
+
+  update(input) {
+    const rects = this.layout();
+    const n = this.items.length;
+    const moved = input.mouseX !== this._lastMX || input.mouseY !== this._lastMY;
+    this._lastMX = input.mouseX;
+    this._lastMY = input.mouseY;
+    if (moved) {
+      for (let i = 0; i < n; i++) if (inRect(input.mouseX, input.mouseY, rects[i])) this.index = i;
+    }
+    if (input.consume('navUp'))   this.index = (this.index - 1 + n) % n;
+    if (input.consume('navDown')) this.index = (this.index + 1) % n;
+    if (input.consume('confirm')) return this.items[this.index];
+    if (input.consume('click')) {
+      for (let i = 0; i < n; i++) {
+        if (inRect(input.mouseX, input.mouseY, rects[i])) { this.index = i; return this.items[i]; }
+      }
+    }
+    return null;
+  },
+
+  draw(ctx) {
+    drawBackground(ctx);
+    const { DIM, ACCENT, FONT } = CONFIG.HUD;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = ACCENT;
+    ctx.font = `bold 34px ${FONT}`;
+    ctx.fillText('SELECT MODE', W / 2, 120);
+
+    const rects = this.layout();
+    for (let i = 0; i < this.items.length; i++) {
+      const it = this.items[i];
+      drawButton(ctx, rects[i], it.id, it.label, i === this.index);
+      if (!it.available) {                      // dim + tag the not-yet-built modes
+        const r = rects[i];
+        ctx.fillStyle = 'rgba(10, 8, 6, 0.55)';
+        ctx.fillRect(r.x, r.y, r.w, r.h);
+        ctx.fillStyle = ACCENT;
+        ctx.font = `bold 13px ${FONT}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('COMING SOON', r.x + r.w / 2, r.y + r.h / 2);
+      }
+    }
+
+    ctx.fillStyle = DIM;
+    ctx.font = `13px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('Up / Down or mouse to select  ·  Enter / click to start  ·  Esc back', W / 2, H - 28);
   },
 };

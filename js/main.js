@@ -1,18 +1,17 @@
 // main.js
 // Entry point: canvas + fixed-timestep loop + the screen router. Screens are
-// 'mainMenu' | 'howToPlay' | 'comingSoon' | 'play' | 'win'. The menu screens
-// live in menu.js; the play/win screens are wired here since they own the car,
-// track, and race.
+// 'mainMenu' | 'gameMode' | 'howToPlay' | 'comingSoon' | 'play' | 'win'. The menu
+// screens live in menu.js; the race is run by the active GAME MODE (modes.js),
+// which the play/win screens delegate to.
 
 import { CONFIG } from './config.js';
 import { Input } from './input.js';
 import { Car } from './car.js';
 import { Track } from './track.js';
-import { Race } from './race.js';
 import { Assets } from './assets.js';
 import { Sound } from './audio.js';
-import { UI } from './ui.js';
-import { MainMenu, HowToPlay, ComingSoon } from './menu.js';
+import { MainMenu, HowToPlay, ComingSoon, GameMode } from './menu.js';
+import { MODES, modeById } from './modes.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -29,13 +28,13 @@ Sound.init();                       // installs the first-gesture audio unlock
 Assets.load();                      // begin loading sprites; draws use placeholders until ready
 
 const car = new Car();
-
-let screen = 'mainMenu';            // 'mainMenu' | 'howToPlay' | 'comingSoon' | 'play' | 'win'
+let mode = MODES[0];                // active game mode (default Standard Race)
+let screen = 'mainMenu';            // see header for the set
 
 function startRace() {
   const s = Track.current.spawn;    // per-track spawn (on the start line, facing along)
   car.reset(s.x, s.y, s.heading);
-  Race.reset(car);                  // lap -> 1, clock -> 0, checkpoint disarmed
+  mode.start(car);                  // mode resets its own state (laps/clock, etc.)
   screen = 'play';
 }
 
@@ -48,8 +47,8 @@ function goTo(name, arg) {
 }
 
 function handleMenuAction(item) {
-  if (item.target === 'play')           goTo('play');
-  else if (item.target === 'howToPlay') goTo('howToPlay');
+  if (item.target === 'gameMode')        goTo('gameMode');
+  else if (item.target === 'howToPlay')  goTo('howToPlay');
   else if (item.target === 'comingSoon') goTo('comingSoon', item.label);
 }
 
@@ -68,6 +67,12 @@ function update(dt) {
       if (item) handleMenuAction(item);
       break;
     }
+    case 'gameMode': {
+      if (Input.consume('back')) { goTo('mainMenu'); break; }
+      const item = GameMode.update(Input);
+      if (item && item.available) { mode = modeById(item.id); goTo('play'); }
+      break;
+    }
     case 'howToPlay':
       if (HowToPlay.update(Input)) goTo('mainMenu');
       break;
@@ -79,11 +84,11 @@ function update(dt) {
       if (Input.consume('restart')) { startRace(); break; }
       const onTrack = Track.isOnTrack(car.x, car.y);
       car.update(dt, Input, { w: W, h: H }, onTrack);
-      Race.update(dt, car);         // lap / checkpoint / timer; flips finished on the win lap
+      mode.update(dt, car);         // mode rules (laps / score / timer)
       const frac = Math.min(1, Math.abs(car.speed) / CONFIG.CAR.MAX_SPEED);
       Sound.engineLevel(frac);      // engine revs with speed
       Sound.tire(!onTrack && Math.abs(car.speed) > 20);  // tire/dirt while bogging off-track
-      if (Race.finished) screen = 'win';
+      if (mode.done) screen = 'win';
       break;
     }
     case 'win': {
@@ -104,15 +109,19 @@ function render() {
 
   switch (screen) {
     case 'mainMenu':   MainMenu.draw(ctx);  break;
+    case 'gameMode':   GameMode.draw(ctx);  break;
     case 'howToPlay':  HowToPlay.draw(ctx); break;
     case 'comingSoon': ComingSoon.draw(ctx); break;
     case 'play':
-    case 'win':
+    case 'win': {
+      const onTrack = Track.isOnTrack(car.x, car.y);
       Track.draw(ctx, W, H);
+      mode.drawWorld(ctx);          // mode world entities (e.g. pickups); no-op for a race
       car.draw(ctx);
-      UI.drawHud(ctx, W, H, car, Track.isOnTrack(car.x, car.y), Race);
-      if (screen === 'win') UI.drawWin(ctx, W, H, Race);
+      mode.drawHud(ctx, W, H, car, onTrack);
+      if (screen === 'win') mode.drawResult(ctx, W, H);
       break;
+    }
   }
 }
 
