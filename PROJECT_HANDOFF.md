@@ -29,7 +29,7 @@
   deliverable; ship the folder holding `index.html` (index.html, css/, js/,
   assets/) and keep this handoff out of it.
 
-## 4. Current status — Phases 1–5 complete; Phase 6 is next
+## 4. Current status — Phases 1–6 complete; Phase 7 is next
 All committed and pushed to `main`.
 
 Phase 1 — shell + driving feel: fixed-timestep loop (1/60 s), keyboard input,
@@ -47,25 +47,28 @@ Phase 4 — art + audio:
 - **Car sprite** — `assets/car.png` (32×32, nose-up); rect fallback.
 - **Track art** — `assets/scenery.png` (800×600 base) + `assets/asphalt.png`
   (64×64 seamless tile) via `createPattern`. Edge stripes + start/finish code-drawn.
-- **Menu framework** — a screen router (`mainMenu | howToPlay | comingSoon | play
-  | win`) in `js/main.js`; menu screens in `js/menu.js`. Main Menu is data-driven
-  (5 buttons), navigable by **keyboard and mouse**, over a `background.png` backdrop
-  with a `title.png` logo (both drop-in, with fallbacks). Buttons are baked PixelLab
-  element sprites (`btn_<id>.png` + `_hover`); How To Play is real; Highscores/Shop/
-  Settings are "Coming soon" stubs.
-- **Audio** (`js/audio.js`, exported as `Sound`) — graceful-silent fallback,
-  first-gesture unlock. **Music** = HTML5 5-track **shuffle-bag jukebox**
-  (`assets/music/`); **engine + tire loops** = Web Audio (seamless), modulated by
-  speed/surface (`assets/sfx/`); **M** mutes.
+- **Menu framework** — a screen router in `js/main.js`; menu screens in `js/menu.js`.
+  Main Menu is data-driven (5 buttons), keyboard + mouse, over a `background.png`
+  backdrop with a `title.png` logo. Baked PixelLab button sprites.
+- **Audio** (`js/audio.js`, `Sound`) — **music** = HTML5 5-track shuffle-bag jukebox;
+  **engine + tire loops** = Web Audio (seamless), modulated by speed/surface; **M** mutes.
 
-Phase 5 — track system (Route 1), vertical slice complete:
+Phase 5 — track system (Route 1):
 - Tracks are **data** — a centerline polyline + width, with per-track spawn, finish
   line, and checkpoint line. On-track = distance-to-centerline ≤ width/2; the road
-  is that centerline stroked with the asphalt pattern; laps come from **directional
-  line-crossing** of the finish/checkpoint segments (`js/race.js`).
+  is that centerline stroked with the asphalt pattern; laps via **directional line-
+  crossing** of the finish/checkpoint segments (`js/race.js`).
 - A **track registry** (`js/track.js`) holds the oval + a **figure-8**; dev key
-  **`T`** cycles them (placeholder until Phase 6's track-select). The oval is
-  reproduced exactly, so its feel is unchanged.
+  **`T`** cycles them (placeholder until Phase 6's track-select).
+
+Phase 6 — game modes:
+- A **mode registry** (`js/modes.js`): each mode is self-contained (start / update /
+  done / drawWorld / drawHud / drawResult); the play screen delegates to the active
+  mode and the Game Mode menu lists the registry. **Standard Race** wraps the lap
+  engine; **Crash & Score** is its own loop — one pickup at a time on the asphalt,
+  grab it for a point, 60 s countdown (start-on-throttle), score at the end.
+- Menu flow: Start → **Game Mode** select → race. Mode buttons are `btn_race` /
+  `btn_crash` (drop-in, flat fallback).
 
 ## 5. File structure
 ```
@@ -73,20 +76,21 @@ JunkyardGrandPrix/
 ├── index.html
 ├── css/style.css
 ├── js/
-│   ├── main.js     — loop + screen router + wiring (owns car/track/race; inits input/sound/assets)
-│   ├── config.js   — tunable constants (driving feel, track geometry, race rules, HUD, debug)
+│   ├── main.js     — loop + screen router + wiring (owns car/track; runs the active mode)
+│   ├── config.js   — tunable constants (driving feel, track geometry, race + crash rules, HUD, debug)
 │   ├── input.js    — keyboard (held + one-shot) + mouse (canvas-mapped pos + click)
 │   ├── car.js      — player car + driving model + forced-slow; sprite-or-rect draw
 │   ├── track.js    — track registry (oval + figure-8) as centerline data; distance
 │   │                 collision + centerline-stroke rendering; per-track finish/spawn
 │   ├── race.js     — laps via finish/checkpoint line-crossing, start-on-throttle timer, win
+│   ├── modes.js    — game-mode registry: Standard Race (wraps race.js) + Crash & Score
 │   ├── assets.js   — image loader (id → assets/<id>.png), graceful fallback
 │   ├── audio.js    — Sound: HTML5 music jukebox + Web Audio engine/tire SFX + mute
-│   ├── menu.js     — Main Menu (kbd+mouse buttons, title card, backdrop), How To Play, Coming Soon
-│   └── ui.js       — in-race HUD + win screen
+│   ├── menu.js     — Main Menu, Game Mode select, How To Play, Coming Soon
+│   └── ui.js       — in-race HUD + win screen; Crash & Score HUD + result
 ├── assets/
 │   ├── car.png · scenery.png (800×600) · asphalt.png (64×64) · background.png · title.png
-│   ├── btn_<start|howtoplay|highscores|shop|settings>.png  (+ _hover each)
+│   ├── btn_<start|howtoplay|highscores|shop|settings|race|crash>.png  (+ _hover each)
 │   ├── music/  — 5 mp3s (web-safe names; listed in audio.js MUSIC)
 │   └── sfx/    — engine.mp3, tires.mp3
 ├── .gitignore
@@ -96,31 +100,31 @@ JunkyardGrandPrix/
 ## 6. Key decisions
 - Modular files; tunables centralized in `config.js` (audio manifest + levels live
   at the top of `audio.js` since they belong to the sound system).
-- Track system: **Route 1 (sampled-polyline centerline + width)**, built. Tracks
-  are data in a registry; on-track = distance-to-centerline ≤ width/2; the road is
-  that centerline stroked with the asphalt pattern; laps via directional line-
-  crossing of per-track finish/checkpoint segments. Polyline chosen over arc-
-  segments — any shape is just points. `TRACK.WIDTH` is still the feel knob.
-- Heading: 0 = up, +CW; forward = (sin h, -cos h). Lap runs CCW. Race timer is
+- Track system: **Route 1 (sampled-polyline centerline + width)**. Tracks are data
+  in a registry; on-track = distance-to-centerline ≤ width/2; the road is that
+  centerline stroked with the asphalt pattern; laps via directional line-crossing of
+  per-track finish/checkpoint segments. Polyline chosen over arc-segments — any shape
+  is just points. `TRACK.WIDTH` is the feel knob.
+- Game modes live in a **registry** (`modes.js`); each mode owns its rules + HUD +
+  result, so the play screen and Game Mode menu stay mode-agnostic. Standard Race
+  reuses the `race.js` lap engine; Crash & Score is a separate score/timer loop.
+- Heading: 0 = up, +CW; forward = (sin h, -cos h). Lap runs CCW. Clocks are
   start-on-throttle.
 - Art: data-driven loader + **graceful fallback everywhere**. Stroking/filling the
   collision path with the texture keeps art aligned to collision for free.
-- Menu: a lightweight string-state **screen router** (not a heavier scene system).
-  Both keyboard and mouse navigate (they cooperate — hover or arrow to select).
+- Menu: a lightweight string-state **screen router**. Both keyboard and mouse
+  navigate (hover or arrow to select).
 - Buttons are baked PixelLab **element** sprites (label + icon baked in), drawn at
-  native aspect (uniform width), **not** runtime 9-sliced (that would distort the
-  baked text). Hover sprite drawn at the same scale/center so its glow blooms;
-  missing art → flat labelled fallback.
-- Audio is split by job: **music = HTML5 `<audio>`** (jukebox; needs the `ended`
-  hook + streaming), **SFX loops (engine, tire) = Web Audio API** (mp3 in an HTML5
-  `loop` clicks at the seam; decoded buffers loop sample-accurately). Pitch via
-  `playbackRate`; a shared mute-gain gates the SFX.
+  native aspect, **not** runtime 9-sliced (would distort the baked text). Hover
+  sprite drawn at the same scale/center so its glow blooms; missing art → fallback.
+- Audio split by job: **music = HTML5 `<audio>`**, **SFX loops = Web Audio** (mp3 in
+  an HTML5 `loop` clicks at the seam; decoded buffers loop sample-accurately).
 - Asset filenames are web-safe (lowercase, no spaces) — itch is case-sensitive.
 
 ## 7. Known rough edges
 - `DEBUG.SHOW_SPEED` is ON — turn OFF before shipping (`config.js > DEBUG`).
-- Dev key **`T`** (cycle track shape) is a placeholder — remove/replace when
-  Phase 6's track-select lands.
+- Dev key **`T`** (cycle track shape) is a placeholder — remove/replace when a real
+  track-select lands.
 - Per-track scenery isn't a thing yet: the figure-8 borrows the oval's
   `scenery.png` ground (fine for now; revisit with real track variety).
 - Window scaling is minimal (CSS max- only). itch fullscreen runs but won't FILL
@@ -133,7 +137,7 @@ BRAKE_ACCEL 420 · COAST_DECEL 180 · TURN_RATE 3.0 · STEER_FULL_SPEED 140 ·
 OFFTRACK_MAX_SPEED 90 · OFFTRACK_DECEL 700.
 config.js > TRACK: OUTER {X60,Y60,W680,H480,R160} · WIDTH 120 · START {400,480,
 right} · FINISH x=400 (the oval sources its track data from these).
-config.js > RACE: LAPS 3.  ·  config.js > HUD: HINT = dark in-race hint text.
+config.js > RACE: LAPS 3.  ·  CRASH: DURATION 60, PICKUP 20.  ·  HUD: HINT = dark hint text.
 track.js: TRACKS registry (oval + figure-8); figure-8 = Gerono lemniscate, a=260.
 audio.js (top): MUSIC list (5 songs) · MUSIC_VOL 0.5 · ENGINE_MAX 0.7 · TIRE_MAX 0.6.
 Quick guide: TRACK.WIDTH = room (main feel knob). OFFTRACK_DECEL = dirt
@@ -143,20 +147,18 @@ punishment. COAST_DECEL = momentum. TURN_RATE = steering tightness.
 Indy 500 homage: varied tracks, multiple modes, ice maps, a difficulty meter, and
 buyable cosmetic cars. Sequenced by dependency:
 
-**Phase 5 — Track system (Route 1) — DONE.** Tracks are data (sampled-polyline
-centerline + width) in a registry; on-track = distance-to-centerline ≤ width/2; the
-road is that centerline stroked with the asphalt pattern; laps via directional
-line-crossing of per-track finish/checkpoint segments. The oval was reproduced
-exactly (no regression) and a **figure-8** proves arbitrary shapes; dev key `T`
-cycles them. (Deferred: per-track scenery; the `T` placeholder → Phase 6 select.)
+**Phase 5 — Track system (Route 1) — DONE.** Tracks are data (polyline centerline +
+width) in a registry; distance collision + centerline-stroke rendering; laps via
+line-crossing of per-track finish/checkpoint segments. Oval reproduced exactly +
+a figure-8; dev key `T` cycles them.
 
-**Phase 6 — Game modes — NEXT.** A mode abstraction over the race. Single-player
-(opponent deferred): **Standard Race** (configurable lap target ≈25, plus a "most
-laps before a timer" variant) and **Crash & Score** (grab square pickups before a
-timer). Generalizes today's hard-coded 3-lap race. Unlocks the Game Mode select
-screen (menu stub already in place).
+**Phase 6 — Game modes — DONE.** A mode registry (`modes.js`); the Game Mode screen
+lists it. **Standard Race** (complete N laps; `RACE.LAPS`, default 3 — bump toward
+~25 for ship) and **Crash & Score** (one pickup at a time, 60 s, score) both play.
+Opponent still deferred (the "Later" item); a timed "most laps in a time limit"
+Standard variant and a real track-select UI are easy follow-ons when wanted.
 
-**Phase 7 — Surface + difficulty.** **Ice** tracks (slippery handling) as a
+**Phase 7 — Surface + difficulty — NEXT.** **Ice** tracks (slippery handling) as a
 per-track surface property; **difficulty meter** (harder = faster) as a speed
 multiplier. Feeds the Settings screen.
 
@@ -166,8 +168,8 @@ Choose-Vehicle screens.
 
 **Later — Opponent AI.** Deferred; slots into Standard Race when wanted.
 
-Menu screens still stubbed ("Coming soon") light up as their phase lands: Game
-Mode → P6, Settings → P7, Shop + Choose Vehicle → P8, Highscores → modes + save.
+Menu screens still stubbed ("Coming soon") light up as their phase lands: Settings
+→ P7, Shop + Choose Vehicle → P8, Highscores → modes + save. (Game Mode is now live.)
 
 **Backlog / ideas (unscheduled):**
 - **Wayfinding indicator** — a glowing directional cue (next-checkpoint arrow or a
