@@ -76,4 +76,42 @@ export const UI = {
     ctx.fillText(`${race.laps} laps · Junkyard Grand Prix`, W / 2, H / 2 + 34);
     ctx.fillText('ENTER / R  race again      Esc  menu', W / 2, H / 2 + 64);
   },
+
+  // Crash & Score HUD: score + countdown (clock turns orange when low).
+  drawCrashHud(ctx, W, H, score, timeLeft) {
+    const { ACCENT, HINT, FONT } = CONFIG.HUD;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = HINT;
+    ctx.font = `13px ${FONT}`;
+    ctx.fillText('Arrows / WASD  drive    R  restart    Esc  menu    M  mute', 12, 10);
+
+    ctx.fillStyle = ACCENT;
+    ctx.font = `bold 20px ${FONT}`;
+    ctx.fillText('SCORE ' + score, 12, 32);
+
+    const secs = Math.ceil(timeLeft);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = secs <= 10 ? '#e0723a' : ACCENT;
+    ctx.fillText('TIME ' + secs, W - 12, 10);
+    ctx.textAlign = 'left';
+  },
+
+  // Crash & Score result overlay.
+  drawCrashResult(ctx, W, H, score) {
+    const { TEXT, DIM, ACCENT, FONT } = CONFIG.HUD;
+    ctx.fillStyle = 'rgba(10, 8, 6, 0.72)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = ACCENT;
+    ctx.font = `bold 52px ${FONT}`;
+    ctx.fillText("TIME'S UP!", W / 2, H / 2 - 60);
+    ctx.fillStyle = TEXT;
+    ctx.font = `28px ${FONT}`;
+    ctx.fillText('SCORE  ' + score, W / 2, H / 2);
+    ctx.fillStyle = DIM;
+    ctx.font = `16px ${FONT}`;
+    ctx.fillText('ENTER / R  play again      Esc  menu', W / 2, H / 2 + 50);
+  },
 };

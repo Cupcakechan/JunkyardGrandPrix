@@ -65,6 +65,14 @@ export const CONFIG = {
     LAPS: 3,                // laps to win
   },
 
+  // Crash & Score mode (Phase 6): grab pickups before the clock runs out.
+  CRASH: {
+    DURATION: 60,            // seconds on the clock
+    PICKUP: 20,              // pickup square size (px)
+    PICKUP_COLOR: '#ffd24a', // bright Atari yellow
+    PICKUP_EDGE: '#1c1a16',
+  },
+
   HUD: {
     TEXT: '#e9e2d0',
     DIM: '#8a8270',
